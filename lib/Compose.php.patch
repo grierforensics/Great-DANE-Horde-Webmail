@@ -1,0 +1,31 @@
+--- /var/www/horde/imp/lib/Compose.php	2016-11-09 16:08:28.798319906 +0000
++++ lib/Compose.php	2016-11-09 22:11:02.754787490 +0000
+@@ -780,6 +780,28 @@
+          * than one if we are encrypting for multiple recipients or
+          * are storing an encrypted message locally. */
+         $encrypt = empty($opts['encrypt']) ? 0 : $opts['encrypt'];
++
++        /* Opportunistic S/MIME encryption */
++        if ($prefs->getValue('use_smime') && $prefs->getValue('gd_try_encrypt') &&
++                !in_array($encrypt, array(IMP_Crypt_Smime::ENCRYPT, IMP_Crypt_Smime::SIGNENC))) {
++            $imp_smime = $injector->getInstance('IMP_Crypt_Smime');
++            $possible = true;
++            try {
++                foreach ($recip['list'] as $addr) {
++                    $key = $imp_smime->getPublicKey($addr->bare_address);
++                    if (is_null($key)) {
++                        $possible = false;
++                    }
++                }
++            } catch (Horde_Exception $e) {
++                $possible = false;
++            }
++
++            if ($possible) {
++                $encrypt = IMP_Crypt_Smime::SIGNENC;
++            }
++        }
++
+         $send_msgs = array();
+         $msg_options = array(
+             'encrypt' => $encrypt,

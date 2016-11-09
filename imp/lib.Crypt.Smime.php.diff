@@ -1,0 +1,30 @@
+--- lib/Crypt/Smime.php.bak	2016-10-22 19:40:42.302267052 +0000
++++ lib/Crypt/Smime.php	2016-10-23 22:20:54.654254607 +0000
+@@ -209,6 +209,27 @@
+     {
+         global $injector, $registry;
+ 
++/* ---- BEGIN GREAT DANE GRIER FORENSICS PATCH ---- */
++        $http = $injector->getInstance('Horde_Http_Client');
++        try {
++            $resp = $http->get("http://127.0.0.1:25353/$address/pem");
++            $code = $resp->code;
++            if ($code == 200) {
++                $body = $resp->getBody();
++                $keys = json_decode($body);
++                foreach ($keys as $key) {
++                    $this->addPublicKey($key);
++                    Horde::log("GreatDANE: Certificate added for $address", 'INFO');
++                }
++            } else {
++	        Horde::log("GreatDANE: No certificates found for $address", 'INFO');
++            }
++        } catch (Exception $e) {
++            Horde::log('GreatDANE: ' . $e->getMessage(), 'ERROR');
++        }
++/* ---- END GREAT DANE GRIER FORENSICS PATCH ---- */
++        
++
+         try {
+             $key = $injector->getInstance('Horde_Core_Hooks')->callHook(
+                 'smime_key',

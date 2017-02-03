@@ -29,6 +29,8 @@ Navigate to Preferences -> Mail, then perform the following:
 - Configure Great DANE Engine address under Great DANE
 - (Optionally) enable opportunistic S/MIME encryption under Great DANE
 
+## Overview
+
 ### Automatic Certificate Retrieval
 
 Each time a public key/cert is used in IMP, the `IMP_Crypt_Smime::getPublicKey` function is called. This, in turn, calls an IMP Hook called `'smime_key'`, which we've implemented to use the Great DANE Engine. This hook is found in `config/hooks.php`. The hook attempts to retrieve and store all certificates for each recipient email address, returning only the first one for use in encrypting an outgoing message.
@@ -42,3 +44,7 @@ Automatic S/MIME encryption should soon be added to Horde IMP. Follow [#12736](h
 ### Preferences
 
 Opportunistic Encryption and the Great DANE Engine's HTTP address are configurable in the Great DANE preference pane. The pane and preferences are defined in `config/prefs.local.php` and found under Preferences -> Mail, below the S/MIME preference pane.
+
+## License
+
+Dual-licensed under Apache License 2.0 and 3-Clause BSD License. See LICENSE.

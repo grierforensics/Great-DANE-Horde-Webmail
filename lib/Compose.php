@@ -798,7 +798,11 @@ class IMP_Compose implements ArrayAccess, Countable, IteratorAggregate
             }
 
             if ($possible) {
-                $encrypt = IMP_Crypt_Smime::SIGNENC;
+                if ($encrypt == IMP_Crypt_Smime::SIGN) {
+                    $encrypt = IMP_Crypt_Smime::SIGNENC;
+                } else {
+                    $encrypt = IMP_Crypt_Smime::ENCRYPT;
+                }
             }
         }
 
@@ -886,14 +890,14 @@ class IMP_Compose implements ArrayAccess, Countable, IteratorAggregate
                 $senttype = IMP_Sentmail::NEWMSG;
                 break;
             }
-
+            $headers_copy = clone $headers;
             try {
-                $this->_prepSendMessageAssert($val['recipients'], $headers, $val['base']);
-                $this->sendMessage($val['recipients'], $headers, $val['base']);
+                $this->_prepSendMessageAssert($val['recipients'], $headers_copy, $val['base']);
+                $this->sendMessage($val['recipients'], $headers_copy, $val['base']);
 
                 /* Store history information. */
                 $msg_id = new Horde_Mail_Rfc822_Identification(
-                    $headers->getValue('message-id')
+                    $headers_copy->getValue('message-id')
                 );
                 $sentmail->log(
                     $senttype,
@@ -907,7 +911,7 @@ class IMP_Compose implements ArrayAccess, Countable, IteratorAggregate
                 /* Unsuccessful send. */
                 if ($e->log()) {
                     $msg_id = new Horde_Mail_Rfc822_Identification(
-                        $headers->getValue('message-id')
+                        $headers_copy->getValue('message-id')
                     );
                     $sentmail->log(
                         $senttype,

@@ -1,6 +1,6 @@
---- /var/www/horde/imp/lib/Compose.php	2016-11-09 16:08:28.798319906 +0000
-+++ lib/Compose.php	2016-11-09 22:11:02.754787490 +0000
-@@ -780,6 +780,28 @@
+--- Compose.php.bak	2017-02-03 11:58:27.437938000 -0500
++++ lib/Compose.php	2017-02-03 12:07:58.526848700 -0500
+@@ -780,6 +780,32 @@
           * than one if we are encrypting for multiple recipients or
           * are storing an encrypted message locally. */
          $encrypt = empty($opts['encrypt']) ? 0 : $opts['encrypt'];
@@ -22,7 +22,11 @@
 +            }
 +
 +            if ($possible) {
-+                $encrypt = IMP_Crypt_Smime::SIGNENC;
++                if ($encrypt == IMP_Crypt_Smime::SIGN) {
++                    $encrypt = IMP_Crypt_Smime::SIGNENC;
++                } else {
++                    $encrypt = IMP_Crypt_Smime::ENCRYPT;
++                }
 +            }
 +        }
 +

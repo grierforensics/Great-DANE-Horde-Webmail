@@ -1,63 +1,44 @@
 # Great DANE for Webmail
 
-Goals:
+Great DANE for Webmail consists of a plugin for [Horde IMP](https://www.horde.org/apps/imp/), a popular, open-source, web-based mail client.
 
-1. Retrieve and install certificates for senders of incoming emails
-2. Retrieve and install certificates for recipients of outgoing emails
+The plugin retrieves and installed public S/MIME certificates from the Great DANE Engine for each recipient of outgoing emails.
 
-## Horde IMP
+## Install
 
-Install the following packages using PEAR, as specified in the linked INSTALL instructions:
+Install Horde and IMP, preferably using PEAR, as specified in the linked instructions for each package.
+Great DANE for Webmail has been tested on CentOS 7 using the following Horde packages:
 
-- Horde 5.2.12 (stable) https://www.horde.org/apps/horde/docs/INSTALL#installing-with-pear
-- IMP 6.2.16 (stable) https://www.horde.org/apps/imp/docs/INSTALL#installing-with-pear
-- Turba 4.2.16 (stable) https://www.horde.org/apps/turba/docs/INSTALL#installing-with-pear
+- [Horde 5.2.13 (stable)](https://www.horde.org/apps/horde/docs/INSTALL#installing-with-pear)
+- [IMP 6.2.17 (stable)](https://www.horde.org/apps/imp/docs/INSTALL#installing-with-pear)
+- [Turba 4.2.18 (stable)](https://www.horde.org/apps/turba/docs/INSTALL#installing-with-pear)
 
-Tips:
+Assuming your Horde installation location is `/var/www/horde`, copy the following files:
 
-- Follow the installation instructions carefully
-- Choose an installation location using `horde_role`, e.g. `/var/www/horde` (covered in installation instructions)
-- Use Apache, MySQL backend (mariadb on CentOS 7).
-- Create `horde` database, and user with all privileges.
-- Use `pear install -a -B` to get optional dependencies.
-- After installing, copy the horde.conf Apache config to `/etc/httpd/conf.d/horde.conf`
+- `./config/hooks.php` -> `/var/www/horde/config/hooks.php`
+- `./config/prefs.local.php` -> `/var/www/horde/config/prefs.local.php`
 
-Post-installation steps:
+## Configure
 
-- Configure database access using database and user created earlier
-- Run the following to create the database tables:
+Navigate to Preferences -> Mail, then perform the following:
 
-    - `/usr/bin/horde_db_migrate`
-    - `/usr/bin/horde_db_migrate imp`
-    - `/usr/bin/horde_db_migrate turba` (2-3x for Turba tables to be properly created)
-
-- Create a "real" Administrator by adding a user
-- Configure logging to write to `/var/log/horde/horde.log`
-- Ensure all of `/var/www/horde` and `/var/log/horde` are owned by `apache` user
-- Configure OpenSSL (`cafile` = `/etc/ssl/certs`, `path` = `/usr/bin/openssl`)
-- Configure an IMAP server for IMP in `/var/www/horde/imp/config/backends.local.php` using the included example
-
-Preferences:
-
-- Set your Local and Time (Global)
 - Set your user identity (name and email address) under Personal Information
 - Indicate whether attachments exist under Mailbox Display (Show Advanced Preferences)
 - Enable S/MIME functionality under S/MIME
 - Upload personal certificate under S/MIME
-- (Optionally) ensure S/MIME signed messages are automatically verified under S/MIME
-- (Optionally) choose to default to signed and/or encrypted messages under Composition
-- (Optionally) add color code to Encrypted/Signed messages under Flags
 - Configure Great DANE Engine address under Great DANE
 - (Optionally) enable opportunistic S/MIME encryption under Great DANE
 
 ### Automatic Certificate Retrieval
 
-Every time a public key/cert is used in IMP, the `IMP_Crypt_Smime::getPublicKey` function is called. This, in turn, calls an IMP Hook called `'smime_key'`, which we've implemented to use the Great DANE Engine. This hook is found in `config/hooks.php`. Our implementation attempts to retrieve and store all certificates for the given recipient email address, returning only the first one for use in encrypting an outgoing message.
+Each time a public key/cert is used in IMP, the `IMP_Crypt_Smime::getPublicKey` function is called. This, in turn, calls an IMP Hook called `'smime_key'`, which we've implemented to use the Great DANE Engine. This hook is found in `config/hooks.php`. The hook attempts to retrieve and store all certificates for each recipient email address, returning only the first one for use in encrypting an outgoing message.
 
 ### Automatic Encryption
 
 All outgoing messages are constructed in `IMP_Compose::buildAndSendMessage`. Unfortunately there aren't any hooks called before messages are encrypted, so `lib/Compose.php` is patched to optionally perform *Opportunistic Encryption*. This code attempts to retrieve a public cert for all intended recipients and, if successful, automatically enables S/MIME encryption (and signing).
 
+Automatic S/MIME encryption should soon be added to Horde IMP. Follow [#12736](https://bugs.horde.org/ticket/12736) for more details.
+
 ### Preferences
 
-Opportunistic Encryption and the Great DANE Engine's HTTP address are configurable in the Great DANE preference pane. The pane and preferences are specified in `config/prefs.local.php`.
+Opportunistic Encryption and the Great DANE Engine's HTTP address are configurable in the Great DANE preference pane. The pane and preferences are defined in `config/prefs.local.php` and found under Preferences -> Mail, below the S/MIME preference pane.

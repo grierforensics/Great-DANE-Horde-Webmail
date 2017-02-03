@@ -1,6 +1,6 @@
 <?php
 
-// *** S/MIME Preferences ***
+// *** Great DANE Preferences ***
 
 $prefGroups['greatdane'] = array(
     'column' => _("General"),

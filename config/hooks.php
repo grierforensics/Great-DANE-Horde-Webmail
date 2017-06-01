@@ -39,26 +39,46 @@ class IMP_Hooks
             return null;
         }
 
+        /*
+         *  The Great DANE Engine returns a response of the form:
+         *  {
+         *    "certificates": [
+         *      {
+         *        "data": string (encoded certificate),
+         *        "ttl": integer (from DNS record),
+         *        "dnssecValidated": boolean (whether DNSSEC validation was successful),
+         *        "certificateUsage": integer (as per RFC6698 and RFC8162),
+         *        "selector": integer (as per RFC6698 and RFC8162),
+         *        "matchingType": integer (as per RFC6698 and RFC8162)
+         *      }
+         *    ]
+         *  }
+         *
+         *  but we are only concerned with the certificate `data` field for now.
+         */
         $body = $resp->getBody();
-        $keys = json_decode($body);
+        $resp = json_decode($body, true);
         $pubKey = null;
-        foreach ($keys as $key) {
-            try {
-                $smime->addPublicKey($key);
-            } catch (Turba_Exception $e) {
-                // We don't care if the key is already in our address book
-                continue;
-            } catch (Horde_Crypt_Exception $e) {
-                Horde::log('Great DANE: Invalid public key: ' . $e->getMessage(), 'ERROR');
-                continue;
-            }
+        if (isset($resp['certificates'])) {
+            foreach ($resp['certificates'] as $cert) {
+                $key = $cert['data'];
+                try {
+                    $smime->addPublicKey($key);
+                } catch (Turba_Exception $e) {
+                    // We don't care if the key is already in our address book
+                    continue;
+                } catch (Horde_Crypt_Exception $e) {
+                    Horde::log('Great DANE: Invalid public key: ' . $e->getMessage(), 'ERROR');
+                    continue;
+                }
 
-            // Use the first fetched key
-            if (!isset($pubKey)) {
-                $pubKey = $key;
-            }
+                // Use the first fetched key
+                if (!isset($pubKey)) {
+                    $pubKey = $key;
+                }
 
-            Horde::log("Great DANE: Certificate added for $address", 'INFO');
+                Horde::log("Great DANE: Certificate added for $address", 'INFO');
+            }
         }
 
         return $pubKey;
